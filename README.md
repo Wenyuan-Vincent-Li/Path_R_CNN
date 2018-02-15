@@ -25,17 +25,17 @@ To help with debugging and understanding the model, there are 3 notebooks
 
 
 ## 1. Anchor sorting and filtering
-Visualizes every step of the first stage Region Proposal Network and displays positive and negative anchors along with anchor box refinement.
-![](/Mask_RCNN/assets/detection_anchors.png)
+Visualizes every step of the first stage Region Proposal Network and displays positive anchors along with anchor box refinement.
+![](/Mask_RCNN/assets/detection_anchors_refinement.png)
 
 ## 2. Bounding Box Refinement
 This is an example of final detection boxes (dotted lines) and the refinement applied to them (solid lines) in the second stage.
-![](/Mask_RCNN/assets/detection_refinement.png)
+![](/Mask_RCNN/assets/detection_bbx_refinement.png)
 
 ## 3. Mask Generation
 Examples of generated masks. These then get scaled and placed on the image in the right location.
 
-![](/Mask_RCNN/assets/detection_masks.png)
+![](/Mask_RCNN/assets/mask_example1.png)
 
 ## 4.Layer activations
 Often it's useful to inspect the activations at different layers to look for signs of trouble (all zeros or random noise).
@@ -52,13 +52,13 @@ TensorBoard is another great debugging and visualization tool. The model is conf
 
 ![](/Mask_RCNN/assets/detection_tensorboard.png)
 
-## 6. Composing the different pieces into a final result
+## 7. Composing the different pieces into a final sementic result
 
 ![](/Mask_RCNN/assets/detection_final.png)
 
-
 # Training on Prostate Dataset
-*TODO: revise this paragraph
+* TODO: revise this paragraph
+
 We're providing pre-trained weights for MS COCO to make it easier to start. You can
 use those weights as a starting point to train your own variation on the network.
 Training and evaluation code is in coco.py. You can import this
@@ -89,7 +89,7 @@ python3 coco.py evaluate --dataset=/path/to/coco/ --model=last
 The training schedule, learning rate, and other parameters should be set in train_prostate.py.
 
 
-# Training on Your Own Dataset
+# Training on Your Own Dataset #TODO: Remove this section
 To train the model on your own dataset you'll need to sub-class two classes:
 
 ```Config```
@@ -125,15 +125,6 @@ We found that smaller learning rates converge faster anyway so we go with that.
 
 * **Anchor Strides:** The lowest level of the pyramid has a stride of 4px relative to the image, so anchors are created at every 4 pixel intervals. To reduce computation and memory load we adopt an anchor stride of 2, which cuts the number of anchors by 4 and doesn't have a significant effect on accuracy.
 
-## Contributing
-Contributions to this repository are welcome. Examples of things you can contribute:
-* Speed Improvements. Like re-writing some Python code in TensorFlow or Cython.
-* Training on other datasets.
-* Accuracy Improvements.
-* Visualizations and examples.
-
-You can also [join our team](https://matterport.com/careers/) and help us build even more projects like this one.
-
 ## Requirements
 * Python 3.4+
 * TensorFlow 1.3+
@@ -163,5 +154,5 @@ If you use Docker, the code has been verified to work on
     You must have the Visual C++ 2015 build tools on your path (see the repo for additional details)
 
 ## More Examples
-![Sheep](/Mask_RCNN/assets/sheep.png)
-![Donuts](/Mask_RCNN/assets/donuts.png)
+![Example2](/Mask_RCNN/assets/instance_annotation2.png)
+![Example3](/Mask_RCNN/assets/instance_annotation2.png)
