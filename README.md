@@ -2,7 +2,7 @@
 
 This is an implementation of [Mask R-CNN](https://arxiv.org/abs/1703.06870) on Python 3, Keras, and TensorFlow. The model generates bounding boxes and segmentation masks for each instance of an object in the histopathological image. It's based on Feature Pyramid Network (FPN) and a ResNet101 backbone.
 
-![Prostate Segmentation Sample](/Mask_RCNN/assets/street.png)
+![Prostate Segmentation Sample](/Mask_RCNN/assets/segmentation_result1.png)
 
 The repository includes two folders:
 * [Data_Pre_Processing](/Data_Pre_Processing) contains source code for pre processing prostate dataset.
@@ -20,45 +20,45 @@ The repository includes two folders:
 
 # Step by Step Detection
 To help with debugging and understanding the model, there are 3 notebooks 
-([Prostate_data_inspect.ipynb](/Mask_RCNN/Prostate_data_inspect_data.ipynb), [inspect_model.ipynb](inspect_model.ipynb),
-[inspect_weights.ipynb](inspect_weights.ipynb)) that provide a lot of visualizations and allow running the model step by step to inspect the output at each point. Here are a few examples:
-
+([Prostate_data_inspect.ipynb](/Mask_RCNN/Prostate_data_inspect_data.ipynb), [Prostate_Detection.ipynb](/Mask_RCNN/Prostate_detection.ipynb),
+[Prostate_Evaluation.ipynb](/Mask_RCNN/Prostate_evaluation.ipynb)) that provide a lot of visualizations and allow running the model step by step to inspect the output at each point. Here are a few examples:
 
 
 ## 1. Anchor sorting and filtering
 Visualizes every step of the first stage Region Proposal Network and displays positive and negative anchors along with anchor box refinement.
-![](assets/detection_anchors.png)
+![](/Mask_RCNN/assets/detection_anchors.png)
 
 ## 2. Bounding Box Refinement
 This is an example of final detection boxes (dotted lines) and the refinement applied to them (solid lines) in the second stage.
-![](assets/detection_refinement.png)
+![](/Mask_RCNN/assets/detection_refinement.png)
 
 ## 3. Mask Generation
 Examples of generated masks. These then get scaled and placed on the image in the right location.
 
-![](assets/detection_masks.png)
+![](/Mask_RCNN/assets/detection_masks.png)
 
 ## 4.Layer activations
 Often it's useful to inspect the activations at different layers to look for signs of trouble (all zeros or random noise).
 
-![](assets/detection_activations.png)
+![](/Mask_RCNN/assets/detection_activations.png)
 
 ## 5. Weight Histograms
 Another useful debugging tool is to inspect the weight histograms. These are included in the inspect_weights.ipynb notebook.
 
-![](assets/detection_histograms.png)
+![](/Mask_RCNN/assets/detection_histograms.png)
 
 ## 6. Logging to TensorBoard
 TensorBoard is another great debugging and visualization tool. The model is configured to log losses and save weights at the end of every epoch.
 
-![](assets/detection_tensorboard.png)
+![](/Mask_RCNN/assets/detection_tensorboard.png)
 
 ## 6. Composing the different pieces into a final result
 
-![](assets/detection_final.png)
+![](/Mask_RCNN/assets/detection_final.png)
 
 
-# Training on MS COCO
+# Training on Prostate Dataset
+*TODO: revise this paragraph
 We're providing pre-trained weights for MS COCO to make it easier to start. You can
 use those weights as a starting point to train your own variation on the network.
 Training and evaluation code is in coco.py. You can import this
@@ -80,13 +80,13 @@ python3 coco.py train --dataset=/path/to/coco/ --model=/path/to/weights.h5
 python3 coco.py train --dataset=/path/to/coco/ --model=last
 ```
 
-You can also run the COCO evaluation code with:
+You can also run the Prostate evaluation code with:
 ```
 # Run COCO evaluation on the last trained model
 python3 coco.py evaluate --dataset=/path/to/coco/ --model=last
 ```
 
-The training schedule, learning rate, and other parameters should be set in coco.py.
+The training schedule, learning rate, and other parameters should be set in train_prostate.py.
 
 
 # Training on Your Own Dataset
