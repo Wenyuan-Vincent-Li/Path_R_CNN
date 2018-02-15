@@ -2,7 +2,7 @@
 
 This is an implementation of [Mask R-CNN](https://arxiv.org/abs/1703.06870) on Python 3, Keras, and TensorFlow. The model generates bounding boxes and segmentation masks for each instance of an object in the histopathological image. It's based on Feature Pyramid Network (FPN) and a ResNet101 backbone.
 
-![Prostate Segmentation Sample](/Mask_RCNN/assets/segmentation_result1.png)
+![Prostate Segmentation Sample](/Mask_RCNN/assets/instance_annotation.png)
 
 The repository includes two folders:
 * [Data_Pre_Processing](/Data_Pre_Processing) contains source code for pre processing prostate dataset.
@@ -26,6 +26,7 @@ To help with debugging and understanding the model, there are 3 notebooks
 
 ## 1. Anchor sorting and filtering
 Visualizes every step of the first stage Region Proposal Network and displays positive anchors along with anchor box refinement.
+
 ![](/Mask_RCNN/assets/detection_anchors_refinement.png)
 
 ## 2. Bounding Box Refinement
@@ -54,7 +55,7 @@ TensorBoard is another great debugging and visualization tool. The model is conf
 
 ## 7. Composing the different pieces into a final sementic result
 
-![](/Mask_RCNN/assets/detection_final.png)
+![](/Mask_RCNN/assets/segmentation_result1.png)
 
 # Training on Prostate Dataset
 * TODO: revise this paragraph
@@ -155,4 +156,4 @@ If you use Docker, the code has been verified to work on
 
 ## More Examples
 ![Example2](/Mask_RCNN/assets/instance_annotation2.png)
-![Example3](/Mask_RCNN/assets/instance_annotation2.png)
+![Example3](/Mask_RCNN/assets/instance_annotation3.png)
