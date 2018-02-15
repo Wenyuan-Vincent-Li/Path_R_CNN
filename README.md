@@ -14,16 +14,13 @@ The repository includes two folders:
     * Pre-trained weights for MS COCO
     * Jupyter notebooks to visualize the detection pipeline at every step
     * ParallelModel class for multi-GPU training
-
     * Evaluation on mIOU
-
     * Detection results on Prostate Dataset
-
 
 
 # Step by Step Detection
 To help with debugging and understanding the model, there are 3 notebooks 
-([inspect_data.ipynb](inspect_data.ipynb), [inspect_model.ipynb](inspect_model.ipynb),
+([Prostate_data_inspect.ipynb](/Mask_RCNN/Prostate_data_inspect_data.ipynb), [inspect_model.ipynb](inspect_model.ipynb),
 [inspect_weights.ipynb](inspect_weights.ipynb)) that provide a lot of visualizations and allow running the model step by step to inspect the output at each point. Here are a few examples:
 
 
