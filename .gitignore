@@ -37,6 +37,6 @@ ehthumbs.db
 Thumbs.db
 
 # My specific folders and files#
-/masks
-/logs
+Data_Pre_Processing/cedars-224/masks
+Mask_RCNN/logs
 *.h5
