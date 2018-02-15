@@ -2,17 +2,20 @@
 
 This is an implementation of [Mask R-CNN](https://arxiv.org/abs/1703.06870) on Python 3, Keras, and TensorFlow. The model generates bounding boxes and segmentation masks for each instance of an object in the histopathological image. It's based on Feature Pyramid Network (FPN) and a ResNet101 backbone.
 
-![Prostate Segmentation Sample](assets/street.png)
+![Prostate Segmentation Sample](/Mask_RCNN/assets/street.png)
 
-The repository includes:
-* Source code for pre-processing Prostate dataset
-* Source code of Mask R-CNN built on FPN and ResNet101.
-* Training code for Prostate Pathological data
-* Pre-trained weights for MS COCO
-* Jupyter notebooks to visualize the detection pipeline at every step
-* ParallelModel class for multi-GPU training
-* Evaluation on mIOU
-* Detection results on Prostate Dataset
+The repository includes two folders:
+* [Data_Pre_Processing](/Data_Pre_Processing) contains source code for pre processing prostate dataset.
+** TODO: explain each source code
+* [Mask_RCNN](/Mask_RCNN) contains source code for building up the Mask RCNN.
+** Source code for pre-processing Prostate dataset
+** Source code of Mask R-CNN built on FPN and ResNet101.
+** Training code for Prostate Pathological data
+** Pre-trained weights for MS COCO
+** Jupyter notebooks to visualize the detection pipeline at every step
+** ParallelModel class for multi-GPU training
+** Evaluation on mIOU
+** Detection results on Prostate Dataset
 
 
 
