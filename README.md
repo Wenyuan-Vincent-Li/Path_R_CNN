@@ -31,7 +31,8 @@ Visualizes every step of the first stage Region Proposal Network and displays po
 
 ## 2. Bounding Box Refinement
 This is an example of final detection boxes (dotted lines) and the refinement applied to them (solid lines) in the second stage.
-![](/Mask_RCNN/assets/detection_bbx_refinement.png)
+
+![](/Mask_RCNN/assets/detection_bbx_refinment.png)
 
 ## 3. Mask Generation
 Examples of generated masks. These then get scaled and placed on the image in the right location.
@@ -53,7 +54,7 @@ TensorBoard is another great debugging and visualization tool. The model is conf
 
 ![](/Mask_RCNN/assets/detection_tensorboard.png)
 
-## 7. Composing the different pieces into a final sementic result
+## 7. Composing the different pieces into a final semantic result
 
 ![](/Mask_RCNN/assets/segmentation_result1.png)
 
