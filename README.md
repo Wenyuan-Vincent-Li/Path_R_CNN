@@ -163,5 +163,5 @@ If you use Docker, the code has been verified to work on
     You must have the Visual C++ 2015 build tools on your path (see the repo for additional details)
 
 ## More Examples
-![Sheep](assets/sheep.png)
-![Donuts](assets/donuts.png)
+![Sheep](/Mask_RCNN/assets/sheep.png)
+![Donuts](/Mask_RCNN/assets/donuts.png)
