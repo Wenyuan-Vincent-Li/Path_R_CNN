@@ -6,15 +6,24 @@ This is an implementation of [Mask R-CNN](https://arxiv.org/abs/1703.06870) on P
 
 The repository includes two folders:
 * [Data_Pre_Processing](/Data_Pre_Processing) contains source code for pre processing prostate dataset.
+
 ..* TODO: explain each source code
 * [Mask_RCNN](/Mask_RCNN) contains source code for building up the Mask RCNN.
+
 ..* Source code for pre-processing Prostate dataset
+
 ..* Source code of Mask R-CNN built on FPN and ResNet101.
+
 ..* Training code for Prostate Pathological data
+
 ..* Pre-trained weights for MS COCO
+
 ..* Jupyter notebooks to visualize the detection pipeline at every step
+
 ..* ParallelModel class for multi-GPU training
+
 ..* Evaluation on mIOU
+
 ..* Detection results on Prostate Dataset
 
 
