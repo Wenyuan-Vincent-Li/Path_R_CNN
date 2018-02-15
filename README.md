@@ -158,3 +158,4 @@ If you use Docker, the code has been verified to work on
 ## More Examples
 ![Example2](/Mask_RCNN/assets/instance_annotation2.png)
 ![Example3](/Mask_RCNN/assets/instance_annotation3.png)
+Test changes only on developer branch!
