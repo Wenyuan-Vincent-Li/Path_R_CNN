@@ -37,6 +37,8 @@ ehthumbs.db
 Thumbs.db
 
 # My specific folders and files#
-Data_Pre_Processing/cedars-224/masks
+Data_Pre_Processing/cedars-224/masks*/
+Data_Pre_Processing/cedars-224/tiles*/
+Data_Pre_Processing/cedars-224/prediction/
 Mask_RCNN/logs
 *.h5
