@@ -858,6 +858,7 @@ def build_rpn_model(anchor_stride, anchors_per_location, depth):
     return KM.Model([input_feature_map], outputs, name="rpn_model")
 
 
+
 ############################################################
 #  Feature Pyramid Network Heads
 ############################################################
@@ -966,6 +967,37 @@ def build_fpn_mask_graph(rois, feature_maps,
                            name="mrcnn_mask")(x)
     return x
 
+############################################################
+#  Build tumor level classfication head
+############################################################
+def build_tumorclass_graph(feature_map):    
+    """Builds the computation graph of image level tumor classification network.
+    Inputs:
+    feature_map: backbone features [batch, height, width, depth]
+    # for c4 in resnet, depth = 1024
+    
+    Returns:
+        tumorclass_logits: [batch, 2] Anchor classifier logits (before softmax)
+        tumorclass_probs: [batch, 2] Anchor classifier probabilities (after softmax).
+    """
+    # Two 1024 FC layers (implemented with Conv2D for consistency)
+    x = KL.Conv2D(1024, (3, 3), padding="valid", 
+                  name="tumor_class_conv1")(feature_map)
+    x = BatchNorm(axis=3, name='tumor_class_bn1')(x)
+    x = KL.Activation('relu')(x)
+    x = KL.Conv2D(1024, (1, 1), name="tumor_class_conv2")(x)
+    x = BatchNorm(axis=3, name='tumor_class_bn2')(x)
+    x = KL.Activation('relu')(x)
+
+    # Classifier head
+    x = KL.Flatten(name='tumor_class_flatten')(x)
+    tumor_class_logits = KL.Dense(2,name='tumor_class_logits')(x)    
+    tumor_probs = KL.Activation("softmax", name="tumor_class")(tumor_class_logits)
+
+    return tumor_class_logits, tumor_probs
+
+############################################################
+############################################################
 
 ############################################################
 #  Loss Functions
@@ -1005,6 +1037,25 @@ def rpn_class_loss_graph(rpn_match, rpn_class_logits):
     loss = K.switch(tf.size(loss) > 0, K.mean(loss), tf.constant(0.0))
     return loss
 
+############################################################
+#  Add tumor level classification loss graph
+############################################################
+def tumor_class_loss_graph(tumor_label, tumor_class_logits):
+    """Tumor level classification loss.
+
+    tumor_label: [batch, 1]. GT of tumor. 1=there are tumor in pic,
+               0=there are no tumors.
+    tumor_class_logits: [batch, 2]. Tumor classifier logits for 
+                tumor/no tumor.
+    """
+    # Sparse Crossentropy loss
+    loss = K.sparse_categorical_crossentropy(target=tumor_label,
+                                             output=tumor_class_logits,
+                                             from_logits=True)
+    loss = K.switch(tf.size(loss) > 0, K.mean(loss), tf.constant(0.0))
+    return loss
+############################################################
+############################################################
 
 def rpn_bbox_loss_graph(config, target_bbox, rpn_match, rpn_bbox):
     """Return the RPN bounding box loss graph.
@@ -1484,6 +1535,27 @@ def build_rpn_targets(image_shape, anchors, gt_class_ids, gt_boxes, config):
 
     return rpn_match, rpn_bbox
 
+############################################################
+#  Build tumor level binary classification head target
+############################################################
+
+def build_tumorclass_targets(input_gt_class_ids):
+    """Given gt_class_ids returned by load_image_gt, return 1 if there is
+    instance(tumor gland) in the image, return 0 if there is no instances.
+    
+    Inputs:
+    input_gt_class_ids: [Batch, DETECTION_MAX_INSTANCES]
+    
+    Outputs:
+    tumorclass_targets: [Batch]
+    """
+    x = KL.Lambda(lambda x : K.sum(x, axis = -1) > 0)(input_gt_class_ids)
+    tumorclass_targets = KL.Lambda(lambda x : tf.cast(x, dtype = tf.int32))(x)
+    
+    return tumorclass_targets
+
+############################################################
+############################################################
 
 def generate_random_rois(image_shape, count, gt_class_ids, gt_boxes):
     """Generates ROI proposals similar to what a region proposal network
@@ -1761,7 +1833,13 @@ class MaskRCNN():
                 outputs of the model differ accordingly.
         """
         assert mode in ['training', 'inference']
-
+        ############################################################
+        #  Whether to use image level tumor classification head
+        ############################################################
+        tumorclass = config.USE_TUMORCLASS        
+        ############################################################
+        ############################################################
+        
         # Image size must be dividable by 2 multiple times
         h, w = config.IMAGE_SHAPE[:2]
         if h / 2**6 != int(h / 2**6) or w / 2**6 != int(w / 2**6):
@@ -1779,7 +1857,7 @@ class MaskRCNN():
                 shape=[None, 1], name="input_rpn_match", dtype=tf.int32)
             input_rpn_bbox = KL.Input(
                 shape=[None, 4], name="input_rpn_bbox", dtype=tf.float32)
-
+            
             # Detection GT (class IDs, bounding boxes, and masks)
             # 1. GT Class IDs (zero padded)
             input_gt_class_ids = KL.Input(
@@ -1803,7 +1881,16 @@ class MaskRCNN():
                 input_gt_masks = KL.Input(
                     shape=[config.IMAGE_SHAPE[0], config.IMAGE_SHAPE[1], None],
                     name="input_gt_masks", dtype=bool)
-
+                
+            ############################################################
+            #  Build tumor level binary classification target
+            ############################################################    
+            if tumorclass:
+                # tumor level classification GT
+                tumor_label = build_tumorclass_targets(input_gt_class_ids)
+            ############################################################
+            ############################################################    
+        
         # Build the shared convolutional layers.
         # Bottom-up Layers
         # Returns a list of the last layers of each stage, 5 in total.
@@ -1869,7 +1956,20 @@ class MaskRCNN():
                                  name="ROI",
                                  anchors=self.anchors,
                                  config=config)([rpn_class, rpn_bbox])
+        
+        ############################################################
+        #  Build tumor level binary classification head using C4
+        ############################################################
+        """ This function build up a tumor classification network which 
+        performs a binary classification on the resnet output C5. The output
+        is a sigmoid function that outputs the tumor prob in the image
+        """        
+        if tumorclass:
+            tumor_class_logits, tumor_class_probs = build_tumorclass_graph(C4)
 
+        ############################################################
+        ############################################################
+        
         if mode == "training":
             # Class ID mask to mark class IDs supported by the dataset the image
             # came from.
@@ -1920,6 +2020,20 @@ class MaskRCNN():
                 [target_bbox, target_class_ids, mrcnn_bbox])
             mask_loss = KL.Lambda(lambda x: mrcnn_mask_loss_graph(*x), name="mrcnn_mask_loss")(
                 [target_mask, target_class_ids, mrcnn_mask])
+            
+            ############################################################
+            #  Add tumor level classification loss to Losses
+            ############################################################
+            """ This function build up a tumor classification network which 
+            performs a binary classification on the resnet output C5. The output
+            is a sigmoid function that outputs the tumor prob in the image
+            """
+            if tumorclass:
+                tumorclass_loss = KL.Lambda(lambda x: tumor_class_loss_graph(*x), name="tumor_class_loss")(
+                [tumor_label, tumor_class_logits])
+            ############################################################
+            ############################################################
+            
 
             # Model
             inputs = [input_image, input_image_meta,
@@ -1930,6 +2044,13 @@ class MaskRCNN():
                        mrcnn_class_logits, mrcnn_class, mrcnn_bbox, mrcnn_mask,
                        rpn_rois, output_rois,
                        rpn_class_loss, rpn_bbox_loss, class_loss, bbox_loss, mask_loss]
+            ############################################################
+            #  Add tumor level classification loss to Losses
+            ############################################################
+            if tumorclass:
+                outputs.append(tumorclass_loss)                
+            ############################################################
+            ############################################################
             model = KM.Model(inputs, outputs, name='mask_rcnn')
         else:
             # Network Heads
@@ -2096,6 +2217,9 @@ class MaskRCNN():
         self.keras_model._per_input_losses = {}
         loss_names = ["rpn_class_loss", "rpn_bbox_loss",
                       "mrcnn_class_loss", "mrcnn_bbox_loss", "mrcnn_mask_loss"]
+        if self.config.USE_TUMORCLASS:
+            loss_names.append("tumor_class_loss")
+        
         for name in loss_names:
             layer = self.keras_model.get_layer(name)
             if layer.output in self.keras_model.losses:
@@ -2214,16 +2338,28 @@ class MaskRCNN():
         assert self.mode == "training", "Create model in training mode."
 
         # Pre-defined layer regular expressions
-        layer_regex = {
-            # all layers but the backbone
-            "heads": r"(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
-            # From a specific Resnet stage and up
-            "3+": r"(res3.*)|(bn3.*)|(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
-            "4+": r"(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
-            "5+": r"(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
-            # All layers
-            "all": ".*",
-        }
+        if self.config.USE_TUMORCLASS:
+            layer_regex = {
+                # all layers but the backbone
+                "heads": r"(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)|(tumor\_.*)",
+                # From a specific Resnet stage and up
+                "3+": r"(res3.*)|(bn3.*)|(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)|(tumor\_.*)",
+                "4+": r"(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)|(tumor\_.*)",
+                "5+": r"(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)|(tumor\_.*)",
+                # All layers
+                "all": ".*",
+            }
+        else:
+            layer_regex = {
+                # all layers but the backbone
+                "heads": r"(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
+                # From a specific Resnet stage and up
+                "3+": r"(res3.*)|(bn3.*)|(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
+                "4+": r"(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
+                "5+": r"(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
+                # All layers
+                "all": ".*",
+            }
         if layers in layer_regex.keys():
             layers = layer_regex[layers]
 
