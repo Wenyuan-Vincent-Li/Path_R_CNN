@@ -112,9 +112,18 @@ if __name__ == '__main__':
         model_path = args.model
 
     # Load weights
+    exclude = ["mrcnn_class_logits", "mrcnn_bbox_fc", 
+               "mrcnn_bbox", "mrcnn_mask"]
+    ###########################################
+    # Add tumor head as exclude
+    ###########################################
+    if config.USE_TUMORCLASS:
+        tumor_head = ["tumor_class_conv1", "tumor_class_bn1", "tumor_class_conv2",
+                     "tumor_class_conv2", "tumor_class_bn2", "tumor_class_logits", "tumor_class"]
+        exclude = exclude + tumor_head
+    
     print("Loading weights ", model_path)
-    model.load_weights(model_path, by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc", 
-                                "mrcnn_bbox", "mrcnn_mask"])
+    model.load_weights(model_path, by_name=True, exclude=exclude)
 
     # Train or evaluate
     if args.command == "train":
@@ -160,7 +169,7 @@ if __name__ == '__main__':
         model.train(dataset_train, dataset_val,
                     learning_rate=config.LEARNING_RATE / 100,
                     epochs=80,
-                    layers='all')
+                    layers='3+')
 
     elif args.command == "evaluate":
         # Validation dataset
