@@ -44,4 +44,5 @@ Mask_RCNN/logs
 *.icloud
 *.ipynb_checkpoints/
 Mask_RCNN/__pycache__/
+Data_Pre_Processing/__pycache__/
 *.h5
