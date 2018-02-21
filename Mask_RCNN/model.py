@@ -2077,10 +2077,17 @@ class MaskRCNN():
                                               config.MASK_POOL_SIZE,
                                               config.NUM_CLASSES)
 
-            model = KM.Model([input_image, input_image_meta],
+            if tumorclass:
+                model = KM.Model([input_image, input_image_meta],
                              [detections, mrcnn_class, mrcnn_bbox,
-                                 mrcnn_mask, rpn_rois, rpn_class, rpn_bbox],
+                              mrcnn_mask, rpn_rois, rpn_class, 
+                              rpn_bbox, tumor_class_probs],
                              name='mask_rcnn')
+            else:
+                model = KM.Model([input_image, input_image_meta],
+                                 [detections, mrcnn_class, mrcnn_bbox,
+                                     mrcnn_mask, rpn_rois, rpn_class, rpn_bbox],
+                                 name='mask_rcnn')
 
         # Add multi-GPU support.
         if config.GPU_COUNT > 1:
@@ -2530,21 +2537,36 @@ class MaskRCNN():
             log("molded_images", molded_images)
             log("image_metas", image_metas)
         # Run object detection
-        detections, mrcnn_class, mrcnn_bbox, mrcnn_mask, \
-            rois, rpn_class, rpn_bbox =\
-            self.keras_model.predict([molded_images, image_metas], verbose=0)
+        if self.config.USE_TUMORCLASS:
+            detections, mrcnn_class, mrcnn_bbox, mrcnn_mask, \
+                rois, rpn_class, rpn_bbox, tumor_class_probs =\
+                self.keras_model.predict([molded_images, image_metas], verbose=0)
+        else:
+            detections, mrcnn_class, mrcnn_bbox, mrcnn_mask, \
+                rois, rpn_class, rpn_bbox =\
+                self.keras_model.predict([molded_images, image_metas], verbose=0)
+        
         # Process detections
         results = []
         for i, image in enumerate(images):
             final_rois, final_class_ids, final_scores, final_masks =\
                 self.unmold_detections(detections[i], mrcnn_mask[i],
                                        image.shape, windows[i])
-            results.append({
-                "rois": final_rois,
-                "class_ids": final_class_ids,
-                "scores": final_scores,
-                "masks": final_masks,
-            })
+            if self.config.USE_TUMORCLASS:
+                results.append({
+                    "rois": final_rois,
+                    "class_ids": final_class_ids,
+                    "scores": final_scores,
+                    "masks": final_masks,
+                    "tumor_probs": tumor_class_probs,
+                })
+            else:
+                results.append({
+                    "rois": final_rois,
+                    "class_ids": final_class_ids,
+                    "scores": final_scores,
+                    "masks": final_masks,
+                })        
         return results
 
     def ancestor(self, tensor, name, checked=None):
