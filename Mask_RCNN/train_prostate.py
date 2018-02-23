@@ -119,7 +119,8 @@ if __name__ == '__main__':
     ###########################################
     if config.USE_TUMORCLASS:
         tumor_head = ["tumor_class_conv1", "tumor_class_bn1", "tumor_class_conv2",
-                     "tumor_class_conv2", "tumor_class_bn2", "tumor_class_logits", "tumor_class"]
+                     "tumor_class_conv2", "tumor_class_bn2", "tumor_class_dense",
+                     "tumor_class_dropout", "tumor_class_logits", "tumor_class"]
         exclude = exclude + tumor_head
     
     print("Loading weights ", model_path)

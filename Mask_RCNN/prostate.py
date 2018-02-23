@@ -58,10 +58,10 @@ class ProstateConfig(Config):
     TRAIN_ROIS_PER_IMAGE = 200
     
     # Use a small epoch since the data is simple
-    STEPS_PER_EPOCH = 800
+    STEPS_PER_EPOCH = 1000
     
     # use small validation steps since the epoch is small
-    VALIDATION_STEPS = 5
+    VALIDATION_STEPS = 50
     
     # Use image level tumor classification head or not
     USE_TUMORCLASS = True
