@@ -166,11 +166,20 @@ if __name__ == '__main__':
 
         # Training - Stage 3
         # Fine tune all layers
-        print("Fine tune all layers")
+        print("Fine tune Resnet stage 3 and up")
         model.train(dataset_train, dataset_val,
                     learning_rate=config.LEARNING_RATE / 100,
-                    epochs=80,
+                    epochs=70,
                     layers='3+')
+        
+        # Training - Stage 4
+        # Fine tune all layers
+        print("Fine tune Resnet stage 2 and up")
+        model.train(dataset_train, dataset_val,
+                    learning_rate=config.LEARNING_RATE / 100,
+                    epochs=200,
+                    layers='2+')
+        
 
     elif args.command == "evaluate":
         # Validation dataset
