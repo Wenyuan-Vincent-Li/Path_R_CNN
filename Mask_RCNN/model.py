@@ -991,7 +991,9 @@ def build_tumorclass_graph(feature_map):
 
     # Classifier head
     x = KL.Flatten(name='tumor_class_flatten')(x)
-    tumor_class_logits = KL.Dense(2,name='tumor_class_logits')(x)    
+    x = KL.Dense(2, activation = 'relu', name='tumor_class_dense')(x)
+    x = KL.Dropout(0.5, name='tumor_class_dropout')(x)
+    tumor_class_logits = KL.Dense(2, name='tumor_class_logits')(x)
     tumor_probs = KL.Activation("softmax", name="tumor_class")(tumor_class_logits)
 
     return tumor_class_logits, tumor_probs
@@ -1049,11 +1051,12 @@ def tumor_class_loss_graph(tumor_label, tumor_class_logits):
                 tumor/no tumor.
     """
     # Sparse Crossentropy loss
+    eta = 1
     loss = K.sparse_categorical_crossentropy(target=tumor_label,
                                              output=tumor_class_logits,
                                              from_logits=True)
     loss = K.switch(tf.size(loss) > 0, K.mean(loss), tf.constant(0.0))
-    return loss
+    return eta * loss
 ############################################################
 ############################################################
 
@@ -1787,7 +1790,6 @@ def data_generator(dataset, config, shuffle=True, augment=True, random_rois=0,
                             batch_mrcnn_class_ids, -1)
                         outputs.extend(
                             [batch_mrcnn_class_ids, batch_mrcnn_bbox, batch_mrcnn_mask])
-
                 yield inputs, outputs
 
                 # start a new batch
@@ -2350,6 +2352,7 @@ class MaskRCNN():
                 # all layers but the backbone
                 "heads": r"(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)|(tumor\_.*)",
                 # From a specific Resnet stage and up
+                "2+": r"(res2.*)|(bn2.*)|(res3.*)|(bn3.*)|(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)|(tumor\_.*)",
                 "3+": r"(res3.*)|(bn3.*)|(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)|(tumor\_.*)",
                 "4+": r"(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)|(tumor\_.*)",
                 "5+": r"(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)|(tumor\_.*)",
@@ -2361,6 +2364,7 @@ class MaskRCNN():
                 # all layers but the backbone
                 "heads": r"(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
                 # From a specific Resnet stage and up
+                "2+": r"(res2.*)|(bn2.*)|(res3.*)|(bn3.*)|(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
                 "3+": r"(res3.*)|(bn3.*)|(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
                 "4+": r"(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
                 "5+": r"(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",

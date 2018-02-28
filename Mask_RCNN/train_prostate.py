@@ -119,7 +119,8 @@ if __name__ == '__main__':
     ###########################################
     if config.USE_TUMORCLASS:
         tumor_head = ["tumor_class_conv1", "tumor_class_bn1", "tumor_class_conv2",
-                     "tumor_class_conv2", "tumor_class_bn2", "tumor_class_logits", "tumor_class"]
+                     "tumor_class_conv2", "tumor_class_bn2", "tumor_class_dense",
+                     "tumor_class_dropout", "tumor_class_logits", "tumor_class"]
         exclude = exclude + tumor_head
     
     print("Loading weights ", model_path)
@@ -165,11 +166,20 @@ if __name__ == '__main__':
 
         # Training - Stage 3
         # Fine tune all layers
-        print("Fine tune all layers")
+        print("Fine tune Resnet stage 3 and up")
         model.train(dataset_train, dataset_val,
                     learning_rate=config.LEARNING_RATE / 100,
-                    epochs=80,
+                    epochs=70,
                     layers='3+')
+        
+        # Training - Stage 4
+        # Fine tune all layers
+        # print("Fine tune Resnet stage 2 and up")
+        # model.train(dataset_train, dataset_val,
+                    # learning_rate=config.LEARNING_RATE / 100,
+                    # epochs=200,
+                    # layers='2+')
+        
 
     elif args.command == "evaluate":
         # Validation dataset
