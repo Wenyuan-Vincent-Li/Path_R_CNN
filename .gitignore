@@ -40,6 +40,7 @@ Thumbs.db
 Data_Pre_Processing/cedars-224/masks*/
 Data_Pre_Processing/cedars-224/tiles*/
 Data_Pre_Processing/cedars-224/prediction/
+Data_Pre_Processing/cedars-224/
 Mask_RCNN/logs
 *.icloud
 *.ipynb_checkpoints/
