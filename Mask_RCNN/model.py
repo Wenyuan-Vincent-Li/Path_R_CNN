@@ -1051,7 +1051,7 @@ def tumor_class_loss_graph(tumor_label, tumor_class_logits):
                 tumor/no tumor.
     """
     # Sparse Crossentropy loss
-    eta = 1000
+    eta = 1
     loss = K.sparse_categorical_crossentropy(target=tumor_label,
                                              output=tumor_class_logits,
                                              from_logits=True)
@@ -1790,7 +1790,6 @@ def data_generator(dataset, config, shuffle=True, augment=True, random_rois=0,
                             batch_mrcnn_class_ids, -1)
                         outputs.extend(
                             [batch_mrcnn_class_ids, batch_mrcnn_bbox, batch_mrcnn_mask])
-
                 yield inputs, outputs
 
                 # start a new batch
