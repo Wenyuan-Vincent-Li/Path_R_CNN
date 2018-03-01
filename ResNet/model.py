@@ -1012,36 +1012,9 @@ class ResNet_Classifier():
             log("image_metas", image_metas)
         # Run object detection
         if self.config.USE_TUMORCLASS:
-            detections, mrcnn_class, mrcnn_bbox, mrcnn_mask, \
-                rois, rpn_class, rpn_bbox, tumor_class_probs =\
+            tumor_class_probs =\
                 self.keras_model.predict([molded_images, image_metas], verbose=0)
-        else:
-            detections, mrcnn_class, mrcnn_bbox, mrcnn_mask, \
-                rois, rpn_class, rpn_bbox =\
-                self.keras_model.predict([molded_images, image_metas], verbose=0)
-        
-        # Process detections
-        results = []
-        for i, image in enumerate(images):
-            final_rois, final_class_ids, final_scores, final_masks =\
-                self.unmold_detections(detections[i], mrcnn_mask[i],
-                                       image.shape, windows[i])
-            if self.config.USE_TUMORCLASS:
-                results.append({
-                    "rois": final_rois,
-                    "class_ids": final_class_ids,
-                    "scores": final_scores,
-                    "masks": final_masks,
-                    "tumor_probs": tumor_class_probs,
-                })
-            else:
-                results.append({
-                    "rois": final_rois,
-                    "class_ids": final_class_ids,
-                    "scores": final_scores,
-                    "masks": final_masks,
-                })        
-        return results
+        return tumor_class_probs
 
     def ancestor(self, tensor, name, checked=None):
         """Finds the ancestor of a TF tensor in the computation graph.
