@@ -991,9 +991,7 @@ def build_tumorclass_graph(feature_map):
 
     # Classifier head
     x = KL.Flatten(name='tumor_class_flatten')(x)
-    x = KL.Dense(2, activation = 'relu', name='tumor_class_dense')(x)
-    x = KL.Dropout(0.5, name='tumor_class_dropout')(x)
-    tumor_class_logits = KL.Dense(2, name='tumor_class_logits')(x)
+    tumor_class_logits = KL.Dense(2,name='tumor_class_logits')(x)    
     tumor_probs = KL.Activation("softmax", name="tumor_class")(tumor_class_logits)
 
     return tumor_class_logits, tumor_probs
@@ -2352,7 +2350,6 @@ class MaskRCNN():
                 # all layers but the backbone
                 "heads": r"(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)|(tumor\_.*)",
                 # From a specific Resnet stage and up
-                "2+": r"(res2.*)|(bn2.*)|(res3.*)|(bn3.*)|(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)|(tumor\_.*)",
                 "3+": r"(res3.*)|(bn3.*)|(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)|(tumor\_.*)",
                 "4+": r"(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)|(tumor\_.*)",
                 "5+": r"(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)|(tumor\_.*)",
@@ -2364,7 +2361,6 @@ class MaskRCNN():
                 # all layers but the backbone
                 "heads": r"(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
                 # From a specific Resnet stage and up
-                "2+": r"(res2.*)|(bn2.*)|(res3.*)|(bn3.*)|(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
                 "3+": r"(res3.*)|(bn3.*)|(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
                 "4+": r"(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
                 "5+": r"(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
