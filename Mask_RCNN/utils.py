@@ -18,6 +18,7 @@ import skimage.color
 import skimage.io
 import urllib.request
 import shutil
+import scipy
 
 # URL from which to download the latest COCO trained weights
 COCO_MODEL_URL = "https://github.com/matterport/Mask_RCNN/releases/download/v2.0/mask_rcnn_coco.h5"
@@ -706,3 +707,145 @@ def download_trained_weights(coco_model_path, verbose=1):
         shutil.copyfileobj(resp, out)
     if verbose > 0:
         print("... done downloading pretrained model!")
+        
+def instance_2_sementic(instance_mask, class_ids):
+    """
+    Convert instance mask to sementic mask
+    Input:
+    instance_mask: [height, width, NUM_INSTANCES]
+    class_ids: [NUM_INSTANCES]
+    Output:
+    result_dict: a dict contains a key 'ATmask' and value sementic mask. The dict setting
+    is for the consistancy of the prostate dataset.
+    """
+    try:
+        h, w, d = instance_mask.shape
+    except ValueError:
+        mask = int(class_ids) * instance_mask 
+        result_dict = {'ATmask': mask}
+        return result_dict
+    
+    mask_map = {}
+    for index, label in enumerate(class_ids):
+        mask_map[str(label)] = np.logical_or(mask_map[str(label)], \
+                                             instance_mask[:, :, index]) \
+        if str(label) in mask_map.keys() else instance_mask[:, :, index]
+    
+    mask = np.zeros((h, w), dtype=np.int)
+
+    for key in mask_map.keys():
+        if (key != '0'):
+            mask = mask + int(key) * mask_map[key] 
+    result_dict = {'ATmask': mask}
+    return result_dict
+
+def prediction_2_sementic(mask, class_ids, scores):
+    """ 
+    Convert maskrcnn prediction to 1 single sementic mask
+    Input:
+    mask: [height, width, NUM_INSTANCES]
+    class_ids: [NUM_INSTANCES]
+    scores: [NUM_INSTANCES]
+    Output:
+    sementic_mask_res: [height, width] a sementic mask 
+    """
+    mask_map = {} # create a probability dict for each class
+    for index, label in enumerate(class_ids):
+        mask_map[str(label)] = \
+        np.maximum(mask_map[str(label)], scores[index] * mask[:, :, index])\
+        if str(label) in mask_map.keys() else scores[index] * mask[:, :, index]
+    
+    ## convert to h * w * num_classes probability map
+    h, w, d = mask.shape
+    for i in range(4):
+        try:
+            sementic_mask = \
+            np.concatenate((sementic_mask, \
+                            np.expand_dims(mask_map[str(i)], axis = -1)),axis = -1)\
+            if (i != 0) else np.expand_dims(mask_map[str(i)], axis = -1)
+        except KeyError:
+            sementic_mask = np.concatenate((sementic_mask, np.zeros((h, w, 1))),axis = -1)\
+            if (i != 0) else np.zeros((h, w, 1))
+            
+    sementic_mask_res = np.argmax(sementic_mask, axis = -1)
+    return sementic_mask_res
+
+def create_crop_region(config):
+    """
+    This function create a crop region (meshgrid) based on config.
+    """
+    region_h = np.arange(config.DETECTION_CROP[0], config.DETECTION_CROP[1])
+    region_w = np.arange(config.DETECTION_CROP[2], config.DETECTION_CROP[3])
+    wv, hv = np.meshgrid(region_h, region_w)
+    return hv, wv
+
+def combine_2_whole_slide(patch_list, width_num, height_num):
+    """
+    Combine the patches to the whole slide
+    Input:
+    patch_list: a list contains the patches in the row_first order.
+    width_num: int number that specify how many patches in each row
+    height_num: int number that specify how many patches in each column
+    Output:
+    whole slide
+    """
+    assert len(patch_list) == width_num * height_num, "Patch num doesn't match width_num * height_num!"
+    row_level = []
+    for i in range(height_num):
+        cur_level = np.concatenate(patch_list[i * width_num : (i + 1) * width_num], axis = 1)
+        row_level.append(cur_level)
+    return np.concatenate(row_level, axis = 0)
+
+def compute_mIOU(c_matrix, th):
+    """ 
+    Compute the mIOU based on the confusion matrix
+    Input:
+    c_matrix: [NUM_CLASSES, NUM_CLASSES] a confusion matrix
+    th: threathold to see whether the mIOU(exclude the class that is not in current matrix) is larger than the th
+    Output:
+    mIOU: mean IOU based on sum(IOU) / NUM_CLASSES
+    IOU: a list for IOU for each class
+    below_th: boolean, True if the mIOU(exclude the class that is not in current matrix) < th
+    """
+    num_class, _ = c_matrix.shape
+    IOU = []
+    sum_IOU = 0
+    num_classes = 0
+    below_th = False
+    for i in range(num_class):
+        p = c_matrix[i, i] / (sum(c_matrix[i, :]) + sum(c_matrix[:, i]) - c_matrix[i, i]) \
+        if (sum(c_matrix[i, :]) + sum(c_matrix[:, i]) - c_matrix[i, i]) else 0
+        IOU.append(p)
+        if p != 0:
+            sum_IOU += p
+            num_classes += 1
+    if sum_IOU / num_classes < th:
+        below_th = True
+    return np.mean(IOU), IOU, below_th
+
+def save_sementic(file_path, result_dict):
+    """
+    Save result_dict as mat file in file_path
+    """
+    scipy.io.savemat(file_path, result_dict)
+    
+def expand_c_matrix(c_matrix, num_classes, gt_sementic_mask, det_sementic_mask):
+    """
+    Expand the confusion matrix if the current confusion matrix doesn't include all the classes
+    """
+    if c_matrix.size != num_classes * num_classes:
+        unique_set = \
+        np.union1d(np.unique(det_sementic_mask), np.unique(gt_sementic_mask))
+        xv, yv = np.meshgrid(unique_set, unique_set)
+        temp = np.zeros((4, 4))
+        temp[yv.astype(int), xv.astype(int)] = c_matrix
+        c_matrix = temp
+    return c_matrix
+
+def compute_OPA(c_matrix):
+    """
+    Compute the overall pixel accuracy based on confusion matrix.
+    """
+    r,c = c_matrix.shape
+    assert r == c, "Invalid confusion matrix: the matrix is not square!"
+    return np.sum(np.multiply(np.identity(r), c_matrix)) / np.sum(c_matrix)

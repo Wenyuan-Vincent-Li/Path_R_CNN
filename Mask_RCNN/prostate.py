@@ -64,7 +64,7 @@ class ProstateConfig(Config):
     VALIDATION_STEPS = 50
     
     # Use image level tumor classification head or not
-    USE_TUMORCLASS = True
+    USE_TUMORCLASS = False
     
 class ProstateDataset(utils.Dataset):
     """Generates the shapes synthetic dataset. The dataset consists of simple
@@ -76,9 +76,9 @@ class ProstateDataset(utils.Dataset):
         dataset_dir: The root directory of the prostate dataset.
         """
         # Add classes
-        self.add_class("prostate", 1, "Low_Grade")
-        self.add_class("prostate", 2, "High_Grade")
-        self.add_class("prostate", 3, "Benign")
+        self.add_class("prostate", 1, "LG")
+        self.add_class("prostate", 2, "HG")
+        self.add_class("prostate", 3, "BN")
         ## todo: change the target directory
         for i in subset_id:
             if mode == -1:
@@ -152,6 +152,24 @@ class ProstateDataset(utils.Dataset):
                         val_list.append(int(j))
         
         return train_list, val_list
+    
+    def load_prob_map(self, image_id):
+        """Load instance masks for shapes of the given image ID.
+        """
+        image_info = self.image_info[image_id]
+        if image_info["source"] != "prostate":
+            print("No such function related to the current dataset!")
+            return None
+        
+        annotations = self.image_info[image_id]["annotations"]
+        file_dir = os.path.join(os.path.dirname(os.path.dirname(annotations)), 'probs_map')
+        file_name = str(image_info["id"]).zfill(4) + '_sementic_probs.mat'
+        filepath = os.path.join(file_dir, file_name)
+        mat = scipy.io.loadmat(filepath, 
+                               mat_dtype=True, squeeze_me=True, struct_as_record=False)
+        probs = mat['prob_mask']
+        
+        return probs
 
     
 

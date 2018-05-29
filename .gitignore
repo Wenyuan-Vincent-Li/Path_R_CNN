@@ -26,7 +26,8 @@
 *.log
 *.sql
 *.sqlite
-
+*.mat
+*.csv
 # OS generated files #
 ######################
 .DS_Store
@@ -48,3 +49,4 @@ Mask_RCNN/logs
 Mask_RCNN/__pycache__/
 Data_Pre_Processing/__pycache__/
 *.h5
+ResNet/logs

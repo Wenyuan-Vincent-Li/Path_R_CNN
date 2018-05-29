@@ -688,7 +688,7 @@ def refine_detections(rois, probs, deltas, window, config):
         window: (y1, x1, y2, x2) in image coordinates. The part of the image
             that contains the image excluding the padding.
 
-    Returns detections shaped: [N, (y1, x1, y2, x2, class_id, score)]
+    Returns detections shaped: [N, (y1, x1, y2, x2, class_id, score, probability[NUM_CLASSES])]
     """
     # Class IDs per ROI
     class_ids = np.argmax(probs, axis=1)
@@ -744,7 +744,8 @@ def refine_detections(rois, probs, deltas, window, config):
     # Coordinates are in image domain.
     result = np.hstack((refined_rois[keep],
                         class_ids[keep][..., np.newaxis],
-                        class_scores[keep][..., np.newaxis]))
+                        class_scores[keep][..., np.newaxis],
+                        probs[keep]))
     return result
 
 
@@ -763,6 +764,7 @@ class DetectionLayer(KE.Layer):
     def call(self, inputs):
         def wrapper(rois, mrcnn_class, mrcnn_bbox, image_meta):
             detections_batch = []
+            probs_batch = []
             _, _, window, _ = parse_image_meta(image_meta)
             for b in range(self.config.BATCH_SIZE):
                 detections = refine_detections(
@@ -779,8 +781,11 @@ class DetectionLayer(KE.Layer):
             # TODO: track where float64 is introduced
             detections_batch = np.array(detections_batch).astype(np.float32)
             # Reshape output
-            # [batch, num_detections, (y1, x1, y2, x2, class_score)] in pixels
-            return np.reshape(detections_batch, [self.config.BATCH_SIZE, self.config.DETECTION_MAX_INSTANCES, 6])
+            # detections_batch: [batch, num_detections, (y1, x1, y2, x2, class_score)] in pixels
+            # probs_batch: [batch, num_detections, num_classes]
+            detections_batch = np.reshape(detections_batch, [self.config.BATCH_SIZE, self.config.DETECTION_MAX_INSTANCES, \
+                                                             6 + self.config.NUM_CLASSES])
+            return detections_batch
 
         # Return wrapped function
         return tf.py_func(wrapper, inputs, tf.float32)
@@ -1819,7 +1824,7 @@ class MaskRCNN():
         config: A Sub-class of the Config class
         model_dir: Directory to save training logs and trained weights
         """
-        assert mode in ['training', 'inference']
+        assert mode in ['training', 'detection', 'evaluation']
         self.mode = mode
         self.config = config
         self.model_dir = model_dir
@@ -1832,7 +1837,7 @@ class MaskRCNN():
             mode: Either "training" or "inference". The inputs and
                 outputs of the model differ accordingly.
         """
-        assert mode in ['training', 'inference']
+        assert mode in ['training', 'detection', 'evaluation']
         ############################################################
         #  Whether to use image level tumor classification head
         ############################################################
@@ -2061,8 +2066,8 @@ class MaskRCNN():
 
             # Detections
             # output is [batch, num_detections, (y1, x1, y2, x2, class_id, score)] in image coordinates
-            detections = DetectionLayer(config, name="mrcnn_detection")(
-                [rpn_rois, mrcnn_class, mrcnn_bbox, input_image_meta])
+            detections = DetectionLayer(config, name="mrcnn_detection")(\
+                                [rpn_rois, mrcnn_class, mrcnn_bbox, input_image_meta])
 
             # Convert boxes to normalized coordinates
             # TODO: let DetectionLayer return normalized coordinates to avoid
@@ -2456,7 +2461,7 @@ class MaskRCNN():
         network output to a format suitable for use in the rest of the
         application.
 
-        detections: [N, (y1, x1, y2, x2, class_id, score)]
+        detections: [N, (y1, x1, y2, x2, class_id, score, probability(NUM_CLASSES))]
         mrcnn_mask: [N, height, width, num_classes]
         image_shape: [height, width, depth] Original size of the image before resizing
         window: [y1, x1, y2, x2] Box in the image where the real image is
@@ -2467,6 +2472,8 @@ class MaskRCNN():
         class_ids: [N] Integer class IDs for each bounding box
         scores: [N] Float probability scores of the class_id
         masks: [height, width, num_instances] Instance masks
+        prob_mask: [height, width, num_classes] Probaility mask as for semntic segmentation
+        sementic_mask: [height, width, num_classes] Sementic segmentation mask
         """
         # How many detections do we have?
         # Detections array is padded with zeros. Find the first class_id == 0.
@@ -2477,6 +2484,7 @@ class MaskRCNN():
         boxes = detections[:N, :4]
         class_ids = detections[:N, 4].astype(np.int32)
         scores = detections[:N, 5]
+        probs = detections[:N, 6:]
         masks = mrcnn_mask[np.arange(N), :, :, class_ids]
 
         # Compute scale and shift to translate coordinates to image domain.
@@ -2503,14 +2511,20 @@ class MaskRCNN():
 
         # Resize masks to original image size and set boundary threshold.
         full_masks = []
+        prob_mask = None
         for i in range(N):
             # Convert neural network mask to full size mask
             full_mask = utils.unmold_mask(masks[i], boxes[i], image_shape)
+            prob_map = generate_prob_map(full_mask, probs[i,:])
             full_masks.append(full_mask)
-        full_masks = np.stack(full_masks, axis=-1)\
-            if full_masks else np.empty((0,) + masks.shape[1:3])
-
-        return boxes, class_ids, scores, full_masks
+            prob_mask = np.maximum(prob_mask, prob_map) if prob_mask is not None else prob_map
+        
+        if full_masks:
+            full_masks = np.stack(full_masks, axis=-1)
+        else:
+            full_masks = np.empty((0,) + masks.shape[1:3])
+            #TODO: fix prob_mask = np.zeros()        
+        return boxes, class_ids, scores, full_masks, prob_mask, np.argmax(prob_mask, axis = -1)
 
     def detect(self, images, verbose=0):
         """Runs the detection pipeline.
@@ -2523,7 +2537,7 @@ class MaskRCNN():
         scores: [N] float probability scores for the class IDs
         masks: [H, W, N] instance binary masks
         """
-        assert self.mode == "inference", "Create model in inference mode."
+        assert self.mode == "detection", "Create model in detection mode."
         assert len(
             images) == self.config.BATCH_SIZE, "len(images) must be equal to BATCH_SIZE"
 
@@ -2549,7 +2563,7 @@ class MaskRCNN():
         # Process detections
         results = []
         for i, image in enumerate(images):
-            final_rois, final_class_ids, final_scores, final_masks =\
+            final_rois, final_class_ids, final_scores, final_masks, prob_mask, sementic_mask =\
                 self.unmold_detections(detections[i], mrcnn_mask[i],
                                        image.shape, windows[i])
             if self.config.USE_TUMORCLASS:
@@ -2558,7 +2572,9 @@ class MaskRCNN():
                     "class_ids": final_class_ids,
                     "scores": final_scores,
                     "masks": final_masks,
-                    "tumor_probs": tumor_class_probs,
+                    "prob_mask": prob_mask,
+                    "sementic_mask": sementic_mask,
+                    "tumor_probs": tumor_class_probs
                 })
             else:
                 results.append({
@@ -2566,6 +2582,8 @@ class MaskRCNN():
                     "class_ids": final_class_ids,
                     "scores": final_scores,
                     "masks": final_masks,
+                    "prob_mask": prob_mask,
+                    "sementic_mask": sementic_mask
                 })        
         return results
 
@@ -2755,3 +2773,28 @@ def batch_pack_graph(x, counts, num_rows):
     for i in range(num_rows):
         outputs.append(x[i, :counts[i]])
     return tf.concat(outputs, axis=0)
+
+############################################################
+# Generating probability map
+############################################################
+def generate_prob_map(full_mask, probs):
+    """
+    Generate the probability map in original image size for certain instance.
+    Input:
+    full_mask: a binary mask shaped as [config.IMAGE_SHAPE[0], config.IMAGE_SHAPE[1]]
+    probs: a probability array shaped as [config.NUM_CLASSES]
+    Output:
+    prob_map: a probaility map shaped as [config.IMAGE_SHAPE[0], config.IMAGE_SHAPE[1], config.NUM_CLASSES]
+    """
+    NUM_CLASSES = np.size(probs)
+    IMAGE_H, IMAGE_W = np.shape(full_mask) 
+    # expand the full_mask to shape [config.IMAGE_SHAPE[0], config.IMAGE_SHAPE[1], config.NUM_CLASSES]
+    full_mask = np.expand_dims(full_mask, axis = -1)
+    full_mask = np.repeat(full_mask, NUM_CLASSES, axis = -1)
+    # broadcast the probs to shape [config.IMAGE_SHAPE[0], config.IMAGE_SHAPE[1], config.NUM_CLASSES]
+    probs = np.tile(probs, (IMAGE_H, IMAGE_W, 1))
+    
+    # elementwise multiplication
+    prob_map = np.multiply(full_mask, probs)
+    return prob_map
+    
