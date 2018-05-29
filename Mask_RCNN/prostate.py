@@ -64,7 +64,7 @@ class ProstateConfig(Config):
     VALIDATION_STEPS = 50
     
     # Use image level tumor classification head or not
-    USE_TUMORCLASS = True
+    USE_TUMORCLASS = False
     
 class ProstateDataset(utils.Dataset):
     """Generates the shapes synthetic dataset. The dataset consists of simple
@@ -76,9 +76,9 @@ class ProstateDataset(utils.Dataset):
         dataset_dir: The root directory of the prostate dataset.
         """
         # Add classes
-        self.add_class("prostate", 1, "Low_Grade")
-        self.add_class("prostate", 2, "High_Grade")
-        self.add_class("prostate", 3, "Benign")
+        self.add_class("prostate", 1, "LG")
+        self.add_class("prostate", 2, "HG")
+        self.add_class("prostate", 3, "BN")
         ## todo: change the target directory
         for i in subset_id:
             if mode == -1:

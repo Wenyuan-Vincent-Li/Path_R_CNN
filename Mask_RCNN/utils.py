@@ -841,3 +841,11 @@ def expand_c_matrix(c_matrix, num_classes, gt_sementic_mask, det_sementic_mask):
         temp[yv.astype(int), xv.astype(int)] = c_matrix
         c_matrix = temp
     return c_matrix
+
+def compute_OPA(c_matrix):
+    """
+    Compute the overall pixel accuracy based on confusion matrix.
+    """
+    r,c = c_matrix.shape
+    assert r == c, "Invalid confusion matrix: the matrix is not square!"
+    return np.sum(np.multiply(np.identity(r), c_matrix)) / np.sum(c_matrix)

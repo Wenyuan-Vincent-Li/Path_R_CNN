@@ -148,8 +148,8 @@ def display_instances(image, boxes, masks, class_ids, class_names,
         label = class_names[class_id]
         x = random.randint(x1, (x1 + x2) // 2)
         caption = "{} {:.3f}".format(label, score) if score else label
-        ax.text(x1, y1 + 8, caption,
-                color='w', size=11, backgroundcolor="none")
+        ax.text(x1, y1 + 40, caption,
+                color='w', size=40, backgroundcolor="none")
 
         # Mask
         mask = masks[:, :, i]
@@ -379,7 +379,7 @@ def draw_boxes(image, boxes=None, refined_boxes=None,
                 # Skip this instance. Has no bbox. Likely lost in cropping.
                 continue
             y1, x1, y2, x2 = boxes[i]
-            p = patches.Rectangle((x1, y1), x2 - x1, y2 - y1, linewidth=2,
+            p = patches.Rectangle((x1, y1), x2 - x1, y2 - y1, linewidth=5,
                                   alpha=alpha, linestyle=style,
                                   edgecolor=color, facecolor='none')
             ax.add_patch(p)
