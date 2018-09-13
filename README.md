@@ -1,14 +1,48 @@
 # Path R-CNN: Object Detection and Segmentation on Pathology Image
 
 This project is forked from [Matterport](https://github.com/matterport/Mask_RCNN) and modified 
-to work on pathological images.
+to work on pathological images. As it inspired by Mask R-CNN, we name our model Path R-CNN.
 
-![Prostate Segmentation Sample](/Mask_RCNN/assets/instance_annotation.png)
+<p align="center"> 
+    <img src="/Mask_RCNN/assets/instance_annotation.png" width="500">
+</p>
 
-The repository includes two folders:
-* [Data_Pre_Processing](/Data_Pre_Processing) contains source code for pre processing prostate dataset.
-    * TODO: explain each source code
-* [Mask_RCNN](/Mask_RCNN) contains source code for building up the Mask RCNN.
+## Model Architecture
+
+We use the ResNet model as a backbone to extract feature maps from the input image. Extracted feature maps 
+are then fed into two branches. In the left branch, the region proposal network (RPN) first generates 
+proposals to tell which regions the grading network head (GNH) should focus upon. The GNH is then used to 
+assign Gleason grades to epithelial cell areas. In the right branch, an Epithelial Network Head (ENH) is 
+used to determine if there is epithelial tissue in the image. The final output depends on the results of 
+the ENH. If there is no epithelial cells, the model outputs the whole image as stroma. Otherwise the model 
+outputs its results from the GNH. As you can see the left part of our model is a "Mask R-CNN". While we use
+an ResNet, padded with a small network head ENH to train the right part (see below: two stage training 
+procedure).
+
+## Two stage training procedure
+We developed a two-stage training strategy for our model:
+
+* __Stage 1__ train the GNH along with the higher layers (stage 4 and 5 in 101 layer structure)
+ of the ResNet backbone. We used the MS COCO pre-trained model to initialize the network. The network 
+ was optimized using stochastic gradient descent (SGD) with backpropagation. Adopting a backward 
+ fine-tuning strategy, we first trained the GNH for 25 epochs. Then we fine-tuned the ResNet 
+ upper layers along with the network head.
+
+* __Stage 2__ takes the fixed weights trained in Stage 1 and only trains the ENH. We chose to 
+  fix the Stage 1 weights in this step because of our intuition that epithelial cell detection is a 
+  relatively simple task. We empirically found that this method worked very well in practice.
+
+## Details of this Repo
+
+The repository includes four folders:
+* [Data_Pre_Processing](/Data_Pre_Processing) contains source code for pre processing prostate dataset. Some
+of the important functions and their corresponding files are:
+    * Remove instance that are two small. ```instance_mask_mode.py```
+    * Convert Semantic mask to instance mask using union-find algorithm. ```semantic_2_instance.py```
+    * Prostate dataset object. ```prostate_dataset.py```
+ 
+* [Mask_RCNN](/Mask_RCNN) contains source code for building up the left branch of our model. Some of the important
+folders and files are:
     * Source code for pre-processing Prostate dataset
     * Source code of Mask R-CNN built on FPN and ResNet101.
     * Training code for Prostate Pathological data
