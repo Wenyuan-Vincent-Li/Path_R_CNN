@@ -14,8 +14,8 @@ import utils
 from prostate_dataset import ProstateDataset
 import numpy as np
 import os
- 
-dataset_dir = os.path.join(os.getcwd(), 'cedars-224')
+data_path = '/data/wenyuan/Path_R_CNN/Data_Pre_Processing'
+dataset_dir = os.path.join(data_path, 'cedars-224')
 dataset = ProstateDataset(dataset_dir)
 
 start_id = 143
@@ -30,6 +30,5 @@ for i in range(start_id, end_id):
         print("Done modified instance mask prior to %d."%i)
 
 # check if the function goes right
-
-#mask, class_ids = dataset.read_instance_ann(5, dir_name = '/masks_instance_mod')
-#dataset.show_instance_ann(mask, class_ids)
+mask, class_ids = dataset.read_instance_ann(5, dir_name = '/masks_instance_mod')
+dataset.show_instance_ann(mask, class_ids)

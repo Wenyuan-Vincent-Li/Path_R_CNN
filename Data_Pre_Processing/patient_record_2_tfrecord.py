@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 """
 Spyder Editor
-
-This is a temporary script file.
+This is a python file that helps write data into tfrecords.
 """
 from xlrd import open_workbook
 
 from tf_records import write_image_annotation_pairs_to_tfrecord
 
-image_dir = './cedars-224/tiles'
-mask_dir = './cedars-224/masks_1_channel'
-patient_excel = './cedars-224/Cases_Tiles.xlsx'
+data_path = '/data/wenyuan/Path_R_CNN/Data_Pre_Processing'
+image_dir = os.path.join(data_path, 'cedars-224/tiles')
+mask_dir = os.path.join(data_path, 'cedars-224/masks_1_channel')
+patient_excel = os.path.join(data_path, 'cedars-224/Cases_Tiles.xlsx')
 wb = open_workbook(patient_excel)
 table = wb.sheet_by_index(0)
 ten_fold_val = [[13,9], [12,6], [17,5], [11,4], [3,10], [1,19], [7,14], [20,2],

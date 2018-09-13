@@ -3,6 +3,8 @@
 Created on Thu Sep 07 10:06:23 2017
 
 @author: Wenyuan Li
+
+Functions that help write images and annotations into tfrecord.
 """
 
 # Important: We are using PIL to read .png files later.
@@ -193,7 +195,3 @@ def read_tfrecord_and_decode_into_image_annotation_pair_tensors(tfrecord_filenam
     annotation = tf.reshape(annotation, annotation_shape)
     
     return image, annotation
-
-    
-    
-    

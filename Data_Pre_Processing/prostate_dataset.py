@@ -4,6 +4,8 @@
 Created on Wed Jan 10 14:06:00 2018
 
 @author: wenyuan
+
+Dataset object for prostate pathological images
 """
 import numpy as np
 from PIL import Image
@@ -117,17 +119,17 @@ class ProstateDataset():
     
     
 if __name__ == '__main__':
-    import utils    
-    dataset_dir = os.path.join(os.getcwd(), 'cedars-224')
+    import utils
+    data_path = '/data/wenyuan/Path_R_CNN/Data_Pre_Processing'
+    dataset_dir = os.path.join(data_path, 'cedars-224')
     start_id = 144
     end_id = 513
     dataset = ProstateDataset(dataset_dir)
     for i in range(start_id, end_id):
         mat = dataset.read_original_ann(i)
         utils.instance_mask_generator(mat, i)
-#    mask, class_ids = dataset.read_instance_ann(0)
-#    print(class_ids)
-#    mat = dataset.read_original_ann(0)
-#    dataset.show_ann_png(dataset.convert_mat_annotations_to_png(mat))
-#    dataset.show_instance_ann(mask, class_ids)
-    
+   mask, class_ids = dataset.read_instance_ann(0)
+   print(class_ids)
+   mat = dataset.read_original_ann(0)
+   dataset.show_ann_png(dataset.convert_mat_annotations_to_png(mat))
+   dataset.show_instance_ann(mask, class_ids)

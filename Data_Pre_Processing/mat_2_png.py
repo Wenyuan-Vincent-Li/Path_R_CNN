@@ -100,4 +100,6 @@ def convert_mat_annotations_to_png(masks_root):
         # TODO: hide 'low-contrast' image warning during saving.
         io.imsave(current_png_file_full_path_to_be_saved, ann)
 
-convert_mat_annotations_to_png('./cedars-224')
+data_path = '/data/wenyuan/Path_R_CNN/Data_Pre_Processing'
+data_dir = os.path.join(data_path, 'cedars-224')
+convert_mat_annotations_to_png(data_dir)
