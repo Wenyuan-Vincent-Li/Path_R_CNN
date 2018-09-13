@@ -21,9 +21,9 @@ COCO_MODEL_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
 # Directory to save logs and model checkpoints, if not provided
 # through the command line argument --logs
 DEFAULT_LOGS_DIR = os.path.join(ROOT_DIR, "logs")
-DEFAULT_DATASET_PATH = "/scratch/wenyuan/Mask_RCNN_On_Pathology/Data_Pre_Processing/cedars-224"
+DEFAULT_DATASET_PATH = "/data/wenyuan/Mask-RCNN/Mask-RCNN-Path/Data_Pre_Processing/cedars-224"
 ## local dataset_dir
-#DEFAULT_DATASET_PATH = "/Users/wenyuan/Documents/MII/Mask-RCNN/Data_Pre_Processing/cedars-224"
+# DEFAULT_DATASET_PATH = "/Users/wenyuan/Documents/MII/Mask-RCNN/Data_Pre_Processing/cedars-224"
 
 ############################################################
 #  Prostate Evaluation
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     parser.add_argument('--mode', required=False,
                         default=16,
                         metavar="<mode for the data importing>",
-                        help='which mode is used to import data, default=144',
+                        help='which mode is used to import data, default=16',
                         type=int)
     parser.add_argument('--dataset', required=False,
                         default=DEFAULT_DATASET_PATH,
@@ -114,6 +114,10 @@ if __name__ == '__main__':
     # Load weights
     exclude = ["mrcnn_class_logits", "mrcnn_bbox_fc", 
                "mrcnn_bbox", "mrcnn_mask"]
+    # if train from scratch
+    with open("structure_file.txt") as txtfile:
+        lines = [line.strip() for line in txtfile]
+    exclude = lines
     ###########################################
     # Add tumor head as exclude
     ###########################################
@@ -143,34 +147,53 @@ if __name__ == '__main__':
         dataset_val.prepare()
 
         # *** This training schedule is an example. Update to your needs ***
-
-        # Training - Stage 1
-        print("Training network heads")
-        model.train(dataset_train, dataset_val,
-                    learning_rate=config.LEARNING_RATE,
-                    epochs=25,
-                    layers='heads')
-
-        # Training - Stage 2
-        # Finetune layers from ResNet stage 4 and up
-        print("Fine tune Resnet stage 4 and up")
-        model.train(dataset_train, dataset_val,
-                    learning_rate=config.LEARNING_RATE,
-                    epochs=40,
-                    layers='4+')
+        print("Training the whole network!")
+# =============================================================================
+#         model.train(dataset_train, dataset_val,
+#                      learning_rate=config.LEARNING_RATE,
+#                      epochs= 70,
+#                      layers='all')
+# =============================================================================
+        
+#        model.train(dataset_train, dataset_val,
+#             learning_rate=config.LEARNING_RATE / 10,
+#             epochs= 75,
+#             layers='all')
         
         model.train(dataset_train, dataset_val,
-                    learning_rate=config.LEARNING_RATE / 10,
-                    epochs=55,
-                    layers='4+')
+             learning_rate=config.LEARNING_RATE / 100,
+             epochs= 120,
+             layers='all')
 
-        # Training - Stage 3
-        # Fine tune all layers
-        print("Fine tune Resnet stage 3 and up")
-        model.train(dataset_train, dataset_val,
-                    learning_rate=config.LEARNING_RATE / 100,
-                    epochs=70,
-                    layers='3+')
+# =============================================================================
+#         # Training - Stage 1
+#         print("Training network heads")
+#         model.train(dataset_train, dataset_val,
+#                     learning_rate=config.LEARNING_RATE,
+#                     epochs=25,
+#                     layers='heads')
+# 
+#         # Training - Stage 2
+#         # Finetune layers from ResNet stage 4 and up
+#         print("Fine tune Resnet stage 4 and up")
+#         model.train(dataset_train, dataset_val,
+#                     learning_rate=config.LEARNING_RATE,
+#                     epochs=40,
+#                     layers='4+')
+#         
+#         model.train(dataset_train, dataset_val,
+#                     learning_rate=config.LEARNING_RATE / 10,
+#                     epochs=55,
+#                     layers='4+')
+# 
+#         # Training - Stage 3
+#         # Fine tune all layers
+#         print("Fine tune Resnet stage 3 and up")
+#         model.train(dataset_train, dataset_val,
+#                     learning_rate=config.LEARNING_RATE / 100,
+#                     epochs=70,
+#                     layers='3+')
+# =============================================================================
 
     elif args.command == "evaluate":
         # Validation dataset
