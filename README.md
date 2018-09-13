@@ -105,9 +105,12 @@ Often it's useful to inspect the activations at different layers to look for sig
 ### More Prediction Results
 
 <p align="center"> 
-    <img src="/Mask_RCNN/assets/instance_annotation2.png" width="500">
-    <img src="/Mask_RCNN/assets/instance_annotation3.png" width="500">
+    <img src="/Mask_RCNN/assets/instance_annotation2.png" width="200">
+    <img src="/Mask_RCNN/assets/instance_annotation3.png" width="200">
 </p>
 
 ##### Useful Paper:
+
 [Mask R-CNN](https://arxiv.org/abs/1703.06870)
+
+[Efficient Inference in Fully Connected CRFs with Gaussian Edge Potentials](http://web.archive.org/web/20161023180357/http://www.philkr.net/home/densecrf)
