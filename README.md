@@ -1,6 +1,7 @@
-# Mask R-CNN for Object Detection and Segmentation on Pathology Data
+# Path R-CNN: Object Detection and Segmentation on Pathology Image
 
-This is an implementation of [Mask R-CNN](https://arxiv.org/abs/1703.06870) on Python 3, Keras, and TensorFlow. The model generates bounding boxes and segmentation masks for each instance of an object in the histopathological image. It's based on Feature Pyramid Network (FPN) and a ResNet101 backbone.
+This project is forked from [Matterport](https://github.com/matterport/Mask_RCNN) and modified 
+to work on pathological images.
 
 ![Prostate Segmentation Sample](/Mask_RCNN/assets/instance_annotation.png)
 
@@ -159,3 +160,6 @@ If you use Docker, the code has been verified to work on
 ![Example2](/Mask_RCNN/assets/instance_annotation2.png)
 ![Example3](/Mask_RCNN/assets/instance_annotation3.png)
 Test changes only on developer branch!
+
+##### Useful Paper:
+[Mask R-CNN](https://arxiv.org/abs/1703.06870)
