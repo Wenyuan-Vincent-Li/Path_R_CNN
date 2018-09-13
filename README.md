@@ -19,6 +19,10 @@ outputs its results from the GNH. As you can see the left part of our model is a
 an ResNet, padded with a small network head ENH to train the right part (see below: two stage training 
 procedure).
 
+<p align="center"> 
+    <img src="/Mask_RCNN/assets/Architecture.png" width="500">
+</p>
+
 ## Two stage training procedure
 We developed a two-stage training strategy for our model:
 
