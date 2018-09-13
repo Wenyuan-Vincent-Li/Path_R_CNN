@@ -6,14 +6,15 @@ Created on Fri Jan 12 14:57:57 2018
 @author: wenyuan
 """
 import os
-
+import sys
+sys.path.append(os.path.dirname(os.getcwd()))
 import model as modellib
 
 import prostate
 import numpy as np
 
 # Root directory of the project
-ROOT_DIR = os.getcwd()
+ROOT_DIR = os.path.dirname(os.getcwd())
 
 # Path to trained weights file
 COCO_MODEL_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
@@ -21,7 +22,7 @@ COCO_MODEL_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
 # Directory to save logs and model checkpoints, if not provided
 # through the command line argument --logs
 DEFAULT_LOGS_DIR = os.path.join(ROOT_DIR, "logs")
-DEFAULT_DATASET_PATH = "/data/wenyuan/Mask-RCNN/Mask-RCNN-Path/Data_Pre_Processing/cedars-224"
+DEFAULT_DATASET_PATH = "/data/wenyuan/Path_R_CNN/Data_Pre_Processing/cedars-224"
 ## local dataset_dir
 # DEFAULT_DATASET_PATH = "/Users/wenyuan/Documents/MII/Mask-RCNN/Data_Pre_Processing/cedars-224"
 
@@ -165,42 +166,38 @@ if __name__ == '__main__':
              epochs= 120,
              layers='all')
 
-# =============================================================================
-#         # Training - Stage 1
-#         print("Training network heads")
-#         model.train(dataset_train, dataset_val,
-#                     learning_rate=config.LEARNING_RATE,
-#                     epochs=25,
-#                     layers='heads')
-# 
-#         # Training - Stage 2
-#         # Finetune layers from ResNet stage 4 and up
-#         print("Fine tune Resnet stage 4 and up")
-#         model.train(dataset_train, dataset_val,
-#                     learning_rate=config.LEARNING_RATE,
-#                     epochs=40,
-#                     layers='4+')
-#         
-#         model.train(dataset_train, dataset_val,
-#                     learning_rate=config.LEARNING_RATE / 10,
-#                     epochs=55,
-#                     layers='4+')
-# 
-#         # Training - Stage 3
-#         # Fine tune all layers
-#         print("Fine tune Resnet stage 3 and up")
-#         model.train(dataset_train, dataset_val,
-#                     learning_rate=config.LEARNING_RATE / 100,
-#                     epochs=70,
-#                     layers='3+')
-# =============================================================================
+=============================================================================
+        # Training - Stage 1
+        print("Training network heads")
+        model.train(dataset_train, dataset_val,
+                    learning_rate=config.LEARNING_RATE,
+                    epochs=25,
+                    layers='heads')
+
+        # Training - Stage 2
+        # Finetune layers from ResNet stage 4 and up
+        print("Fine tune Resnet stage 4 and up")
+        model.train(dataset_train, dataset_val,
+                    learning_rate=config.LEARNING_RATE,
+                    epochs=40,
+                    layers='4+')
+
+        model.train(dataset_train, dataset_val,
+                    learning_rate=config.LEARNING_RATE / 10,
+                    epochs=55,
+                    layers='4+')
+
+        # Training - Stage 3
+        # Fine tune all layers
+        print("Fine tune Resnet stage 3 and up")
+        model.train(dataset_train, dataset_val,
+                    learning_rate=config.LEARNING_RATE / 100,
+                    epochs=70,
+                    layers='3+')
+=============================================================================
 
     elif args.command == "evaluate":
-        # Validation dataset
-#        dataset_val = prostate.ProstateDataset()
-#        dataset_val.load_coco(args.dataset, val_list)
-#        dataset_val.prepare()
-        print("Running Prostate evaluation on {} images.".format(args.limit))
+        print("Running Prostate evaluation on images.")
         # todo: evaluate_coco(model, dataset_val, coco, "bbox", limit=int(args.limit))
     else:
         print("'{}' is not recognized. "

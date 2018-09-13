@@ -160,11 +160,7 @@ if __name__ == '__main__':
         
 
     elif args.command == "evaluate":
-        # Validation dataset
-#        dataset_val = prostate.ProstateDataset()
-#        dataset_val.load_coco(args.dataset, val_list)
-#        dataset_val.prepare()
-        print("Running Prostate evaluation on {} images.".format(args.limit))
+        print("Running Prostate evaluation on images.")
         # todo: evaluate_coco(model, dataset_val, coco, "bbox", limit=int(args.limit))
     else:
         print("'{}' is not recognized. "

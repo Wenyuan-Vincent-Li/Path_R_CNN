@@ -4,6 +4,8 @@
 Created on Thu Jan 11 10:16:13 2018
 
 @author: wenyuan
+
+Contains config file for path r-cnn and prostate data generator
 """
 
 import os
@@ -175,7 +177,7 @@ class ProstateDataset(utils.Dataset):
 
 if __name__ == '__main__':
     import random
-    dataset_dir = "/Users/wenyuan/Documents/MII/Mask-RCNN/Data_Pre_Processing/cedars-224"
+    dataset_dir = "/data/wenyuan/Path_R_CNN/Data_Pre_Processing/cedars-224"
     config = ProstateConfig()
     config.display()
     dataset = ProstateDataset()
