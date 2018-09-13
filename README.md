@@ -43,157 +43,71 @@ of the important functions and their corresponding files are:
  
 * [Mask_RCNN](/Mask_RCNN) contains source code for building up the left branch of our model. Some of the important
 folders and files are:
-    * Source code for pre-processing Prostate dataset
-    * Source code of Mask R-CNN built on FPN and ResNet101.
-    * Training code for Prostate Pathological data
-    * Pre-trained weights for MS COCO
-    * Jupyter notebooks to visualize the detection pipeline at every step
-    * ParallelModel class for multi-GPU training
-    * Evaluation on mIOU
-    * Detection results on Prostate Dataset
+    * Source code for model config and Prostate dataset generator ```prostate.py```
+    * Source code of Path R-CNN built on FPN and ResNet101 (left branch). ```model.py```
+    * Training code for Prostate Pathological data. ```Training Folder```
+    * Evaluation on mIOU ```Evaluation Folder```
+    * Detection results on Prostate Dataset ```Inference Folder```
+
+* [ResNet](/Mask_RCNN) contains source code for building up the right branch of our model. Some of the important
+folders and files are:
+    * Source code for train the right branch. ```train_prostate_resnet_for_each_fold.py```
+    * Source code for combine two branch trained weights. ```h5file_manipulation.ipynb```
+    * Source code for plot roc and derive auc. ```derive_AUC.py plot_roc_curve.ipynb```
+
+* [CRF_Post_Processing](/CRF_Post_Processing) contains conditional random field post precessing part discussed 
+[here](https://github.com/lucasb-eyer/pydensecrf).
+    * The effect of using CRF is shown in ```CRF_Post_Processing.ipynb```.
+
+## Visualization
+
+Here are some visualization results using the left branch of our model.
+
+### 1. Anchor sorting and filtering
+
+Visualizes every step of the first stage Region Proposal Network and displays positive anchors 
+along with anchor box refinement.
+
+<p align="center"> 
+    <img src="Mask_RCNN/assets/detection_anchors_refinement.png" width="500">
+</p>
+
+### 2. Bounding Box Refinement
+This is an example of final detection boxes (dotted lines) and the refinement applied to them (solid lines)
+in the second stage.
+
+<p align="center"> 
+    <img src="/Mask_RCNN/assets/detection_bbx_refinment.png" width="500">
+</p>
 
 
-# Step by Step Detection
-To help with debugging and understanding the model, there are 3 notebooks 
-([Prostate_data_inspect.ipynb](/Mask_RCNN/Prostate_data_inspect_data.ipynb), [Prostate_Detection.ipynb](/Mask_RCNN/Prostate_detection.ipynb),
-[Prostate_Evaluation.ipynb](/Mask_RCNN/Prostate_evaluation.ipynb)) that provide a lot of visualizations and allow running the model step by step to inspect the output at each point. Here are a few examples:
-
-
-## 1. Anchor sorting and filtering
-Visualizes every step of the first stage Region Proposal Network and displays positive anchors along with anchor box refinement.
-
-![](/Mask_RCNN/assets/detection_anchors_refinement.png)
-
-## 2. Bounding Box Refinement
-This is an example of final detection boxes (dotted lines) and the refinement applied to them (solid lines) in the second stage.
-
-![](/Mask_RCNN/assets/detection_bbx_refinment.png)
-
-## 3. Mask Generation
+### 3. Mask Generation
 Examples of generated masks. These then get scaled and placed on the image in the right location.
 
-![](/Mask_RCNN/assets/mask_example1.png)
+<p align="center"> 
+    <img src="/Mask_RCNN/assets/mask_example1.png" width="500">
+</p>
 
-## 4.Layer activations
-Often it's useful to inspect the activations at different layers to look for signs of trouble (all zeros or random noise).
+### 4.Layer activations
+Often it's useful to inspect the activations at different layers to look for signs of trouble 
+(all zeros or random noise).
 
-![](/Mask_RCNN/assets/detection_activations.png)
+<p align="center"> 
+    <img src="/Mask_RCNN/assets/detection_activations.png" width="500">
+</p>
 
-## 5. Weight Histograms
-Another useful debugging tool is to inspect the weight histograms. These are included in the inspect_weights.ipynb notebook.
+### 5. Composing the different pieces into a final semantic result
 
-![](/Mask_RCNN/assets/detection_histograms.png)
+<p align="center"> 
+    <img src="/Mask_RCNN/assets/segmentation_result1.png" width="500">
+</p>
 
-## 6. Logging to TensorBoard
-TensorBoard is another great debugging and visualization tool. The model is configured to log losses and save weights at the end of every epoch.
+### More Prediction Results
 
-![](/Mask_RCNN/assets/detection_tensorboard.png)
-
-## 7. Composing the different pieces into a final semantic result
-
-![](/Mask_RCNN/assets/segmentation_result1.png)
-
-# Training on Prostate Dataset
-* TODO: revise this paragraph
-
-We're providing pre-trained weights for MS COCO to make it easier to start. You can
-use those weights as a starting point to train your own variation on the network.
-Training and evaluation code is in coco.py. You can import this
-module in Jupyter notebook (see the provided notebooks for examples) or you
-can run it directly from the command line as such:
-
-```
-# Train a new model starting from pre-trained COCO weights
-python3 coco.py train --dataset=/path/to/coco/ --model=coco
-
-# Train a new model starting from ImageNet weights
-python3 coco.py train --dataset=/path/to/coco/ --model=imagenet
-
-# Continue training a model that you had trained earlier
-python3 coco.py train --dataset=/path/to/coco/ --model=/path/to/weights.h5
-
-# Continue training the last model you trained. This will find
-# the last trained weights in the model directory.
-python3 coco.py train --dataset=/path/to/coco/ --model=last
-```
-
-You can also run the Prostate evaluation code with:
-```
-# Run COCO evaluation on the last trained model
-python3 coco.py evaluate --dataset=/path/to/coco/ --model=last
-```
-
-The training schedule, learning rate, and other parameters should be set in train_prostate.py.
-
-
-# Training on Your Own Dataset #TODO: Remove this section
-To train the model on your own dataset you'll need to sub-class two classes:
-
-```Config```
-This class contains the default configuration. Subclass it and modify the attributes you need to change.
-
-```Dataset```
-This class provides a consistent way to work with any dataset. 
-It allows you to use new datasets for training without having to change 
-the code of the model. It also supports loading multiple datasets at the
-same time, which is useful if the objects you want to detect are not 
-all available in one dataset. 
-
-The ```Dataset``` class itself is the base class. To use it, create a new
-class that inherits from it and adds functions specific to your dataset.
-See the base `Dataset` class in utils.py and examples of extending it in train_shapes.ipynb and coco.py.
-
-## Differences from the Official Paper
-This implementation follows the Mask RCNN paper for the most part, but there are a few cases where we deviated in favor of code simplicity and generalization. These are some of the differences we're aware of. If you encounter other differences, please do let us know.
-
-* **Image Resizing:** To support training multiple images per batch we resize all images to the same size. For example, 1024x1024px on MS COCO. We preserve the aspect ratio, so if an image is not square we pad it with zeros. In the paper the resizing is done such that the smallest side is 800px and the largest is trimmed at 1000px.
-* **Bounding Boxes**: Some datasets provide bounding boxes and some provide masks only. To support training on multiple datasets we opted to ignore the bounding boxes that come with the dataset and generate them on the fly instead. We pick the smallest box that encapsulates all the pixels of the mask as the bounding box. This simplifies the implementation and also makes it easy to apply certain image augmentations that would otherwise be really hard to apply to bounding boxes, such as image rotation.
-
-    To validate this approach, we compared our computed bounding boxes to those provided by the COCO dataset.
-We found that ~2% of bounding boxes differed by 1px or more, ~0.05% differed by 5px or more, 
-and only 0.01% differed by 10px or more.
-
-* **Learning Rate:** The paper uses a learning rate of 0.02, but we found that to be
-too high, and often causes the weights to explode, especially when using a small batch
-size. It might be related to differences between how Caffe and TensorFlow compute 
-gradients (sum vs mean across batches and GPUs). Or, maybe the official model uses gradient
-clipping to avoid this issue. We do use gradient clipping, but don't set it too aggressively.
-We found that smaller learning rates converge faster anyway so we go with that.
-
-* **Anchor Strides:** The lowest level of the pyramid has a stride of 4px relative to the image, so anchors are created at every 4 pixel intervals. To reduce computation and memory load we adopt an anchor stride of 2, which cuts the number of anchors by 4 and doesn't have a significant effect on accuracy.
-
-## Requirements
-* Python 3.4+
-* TensorFlow 1.3+
-* Keras 2.0.8+
-* Jupyter Notebook
-* Numpy, skimage, scipy, Pillow, cython, h5py
-
-### MS COCO Requirements:
-To train or test on MS COCO, you'll also need:
-* pycocotools (installation instructions below)
-* [MS COCO Dataset](http://cocodataset.org/#home)
-* Download the 5K [minival](https://dl.dropboxusercontent.com/s/o43o90bna78omob/instances_minival2014.json.zip?dl=0)
-  and the 35K [validation-minus-minival](https://dl.dropboxusercontent.com/s/s3tw5zcg7395368/instances_valminusminival2014.json.zip?dl=0)
-  subsets. More details in the original [Faster R-CNN implementation](https://github.com/rbgirshick/py-faster-rcnn/blob/master/data/README.md).
-
-If you use Docker, the code has been verified to work on
-[this Docker container](https://hub.docker.com/r/waleedka/modern-deep-learning/).
-
-
-## Installation
-1. Clone this repository
-2. Download pre-trained COCO weights (mask_rcnn_coco.h5) from the [releases page](https://github.com/matterport/Mask_RCNN/releases).
-3. (Optional) To train or test on MS COCO install `pycocotools` from one of these repos. They are forks of the original pycocotools with fixes for Python3 and Windows (the official repo doesn't seem to be active anymore).
-
-    * Linux: https://github.com/waleedka/coco
-    * Windows: https://github.com/philferriere/cocoapi.
-    You must have the Visual C++ 2015 build tools on your path (see the repo for additional details)
-
-## More Examples
-![Example2](/Mask_RCNN/assets/instance_annotation2.png)
-![Example3](/Mask_RCNN/assets/instance_annotation3.png)
-Test changes only on developer branch!
+<p align="center"> 
+    <img src="/Mask_RCNN/assets/instance_annotation2.png" width="500">
+    <img src="/Mask_RCNN/assets/instance_annotation3.png" width="500">
+</p>
 
 ##### Useful Paper:
 [Mask R-CNN](https://arxiv.org/abs/1703.06870)
