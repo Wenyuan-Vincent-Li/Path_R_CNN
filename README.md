@@ -102,11 +102,11 @@ Often it's useful to inspect the activations at different layers to look for sig
     <img src="/Mask_RCNN/assets/segmentation_result1.png" width="500">
 </p>
 
-### More Prediction Results
+## More Prediction Results
 
 <p align="center"> 
-    <img src="/Mask_RCNN/assets/instance_annotation2.png" width="200">
-    <img src="/Mask_RCNN/assets/instance_annotation3.png" width="200">
+    <img src="/Mask_RCNN/assets/instance_annotation2.png" width="400">
+    <img src="/Mask_RCNN/assets/instance_annotation3.png" width="400">
 </p>
 
 ##### Useful Paper:
