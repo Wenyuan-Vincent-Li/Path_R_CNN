@@ -1,5 +1,5 @@
 # Path R-CNN: Object Detection and Segmentation on Pathology Image
-
+#An Amazing Project
 This project is forked from [Matterport](https://github.com/matterport/Mask_RCNN) and modified 
 to work on pathological images. As it inspired by Mask R-CNN, we name our model Path R-CNN.
 
